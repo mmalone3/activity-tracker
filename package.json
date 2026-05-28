@@ -1,0 +1,17 @@
+{
+  "name": "activity-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "body-parser": "^2.2.2",
+    "cors": "^2.8.6",
+    "express": "^4.21.2",
+    "msnodesqlv8": "^5.2.0",
+    "mssql": "^12.5.4",
+    "sqlite3": "^6.0.1"
+  }
+}

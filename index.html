@@ -1,0 +1,2260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Tracker - Focus Mode</title>
+    <style>
+        :root {
+            --bg-1: #f3ece4;
+            --bg-2: #eaf3ef;
+            --card: #fffdf9;
+            --card-alt: #f8fbf9;
+            --ink: #192824;
+            --muted: #5d6f69;
+            --accent: #0f766e;
+            --accent-2: #0c4a6e;
+            --accent-soft: #ddf3ef;
+            --danger: #b91c1c;
+            --border: #d3ddd8;
+            --shadow-lg: 0 22px 60px rgba(16, 38, 32, 0.16);
+            --shadow-md: 0 10px 28px rgba(16, 38, 32, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Franklin Gothic Medium", "Segoe UI", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 0% 10%, rgba(12, 74, 110, 0.22), transparent 40%),
+                radial-gradient(circle at 100% 100%, rgba(15, 118, 110, 0.2), transparent 35%),
+                linear-gradient(145deg, var(--bg-1), var(--bg-2));
+            padding: 18px;
+        }
+
+        .shell {
+            width: min(980px, 100%);
+            margin: 0 auto;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 20px;
+            background: linear-gradient(90deg, rgba(15, 118, 110, 0.12), rgba(15, 118, 110, 0));
+            border-bottom: 1px solid var(--border);
+        }
+
+        .heading {
+            margin: 0;
+            font-size: 1.12rem;
+            letter-spacing: 0.4px;
+        }
+
+        .subhead {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon-btn,
+        .btn {
+            border-radius: 11px;
+            border: 1px solid var(--accent);
+            background: var(--accent);
+            color: #fff;
+            cursor: pointer;
+            font-weight: 700;
+            transition: transform 120ms ease, filter 120ms ease;
+        }
+
+        .icon-btn:hover,
+        .btn:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.06);
+        }
+
+        .icon-btn {
+            width: 38px;
+            height: 38px;
+            font-size: 1rem;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 10px 14px;
+        }
+
+        .btn.secondary {
+            background: #fff;
+            color: var(--accent);
+        }
+
+        .btn.danger {
+            border-color: var(--danger);
+            background: var(--danger);
+        }
+
+        .main {
+            padding: 24px;
+            display: grid;
+            gap: 18px;
+        }
+
+        .timer-shell {
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: linear-gradient(160deg, #ffffff, var(--card-alt));
+            box-shadow: var(--shadow-md);
+            padding: 26px 22px;
+            text-align: center;
+        }
+
+        #active-label {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.92rem;
+            min-height: 22px;
+        }
+
+        #timer {
+            margin: 10px 0 2px;
+            font-family: "Consolas", "SFMono-Regular", Menlo, Monaco, "Liberation Mono", "Courier New", monospace;
+            font-size: clamp(3rem, 10vw, 6.2rem);
+            letter-spacing: 0.04em;
+            line-height: 1;
+            color: var(--accent-2);
+            font-weight: 700;
+        }
+
+        .timer-caption {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.84rem;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .category-btn {
+            border: 1px solid var(--border);
+            background: #fff;
+            color: var(--ink);
+            border-radius: 13px;
+            min-height: 54px;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 120ms ease;
+        }
+
+        .category-btn:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+        }
+
+        .category-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+            box-shadow: 0 8px 18px rgba(15, 118, 110, 0.24);
+        }
+
+        .custom-panel {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: #ffffff;
+            padding: 12px;
+            display: none;
+            animation: rise 180ms ease;
+        }
+
+        .custom-panel.open {
+            display: grid;
+            gap: 10px;
+        }
+
+        @keyframes rise {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .field-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 8px;
+        }
+
+        .field-row input,
+        .field-row select {
+            width: 100%;
+            border: 1px solid #c8d7d1;
+            border-radius: 10px;
+            padding: 10px 11px;
+            font-size: 0.9rem;
+            color: var(--ink);
+            background: #fff;
+        }
+
+        .quick-picks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+        }
+
+        .quick-pick {
+            border: 1px dashed var(--accent);
+            background: var(--accent-soft);
+            color: #0d4d47;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 0.82rem;
+            cursor: pointer;
+        }
+
+        .action-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        #status-message {
+            min-height: 24px;
+            margin: 0;
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        #status-message.success {
+            display: block;
+            color: #065f46;
+            border: 1px solid #ccebdc;
+            background: #ecfdf5;
+        }
+
+        #status-message.error {
+            display: block;
+            color: #7f1d1d;
+            border: 1px solid #fecaca;
+            background: #fef2f2;
+        }
+
+        .mini-history {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px;
+            background: #fff;
+            max-height: 145px;
+            overflow: auto;
+        }
+
+        .mini-history h3 {
+            margin: 0 0 8px;
+            font-size: 0.9rem;
+            color: #2b4d47;
+        }
+
+        .mini-item {
+            border-bottom: 1px solid #e5ece8;
+            padding: 6px 0;
+            color: var(--muted);
+            font-size: 0.84rem;
+        }
+
+        .mini-item:last-child {
+            border-bottom: none;
+        }
+
+        .inline-info {
+            border-top: 1px dashed #c8d8d1;
+            padding-top: 8px;
+        }
+
+        .inline-info details {
+            font-size: 0.84rem;
+            color: var(--muted);
+        }
+
+        .inline-info summary {
+            cursor: pointer;
+            color: #2f5f57;
+            font-weight: 700;
+        }
+
+        .inline-info ul {
+            margin: 8px 0 0;
+            padding-left: 18px;
+        }
+
+        .inline-info li {
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 33, 29, 0.4);
+            backdrop-filter: blur(2px);
+            display: none;
+            z-index: 20;
+        }
+
+        .overlay.open {
+            display: block;
+        }
+
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            width: min(760px, 100%);
+            background: #ffffff;
+            border-left: 1px solid var(--border);
+            box-shadow: -18px 0 40px rgba(7, 26, 24, 0.2);
+            z-index: 30;
+            transform: translateX(100%);
+            transition: transform 220ms ease;
+            display: grid;
+            grid-template-rows: auto 1fr;
+        }
+
+        .settings-panel.open {
+            transform: translateX(0);
+        }
+
+        .settings-head {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            background: var(--card-alt);
+        }
+
+        .settings-head h2 {
+            margin: 0;
+            font-size: 1rem;
+            color: #2b4d47;
+        }
+
+        .settings-body {
+            overflow: auto;
+            padding: 14px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .block {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            background: #fff;
+        }
+
+        .block h3 {
+            margin: 0 0 10px;
+            font-size: 0.93rem;
+            color: #284d47;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 8px;
+        }
+
+        .source-row,
+        .cleanup-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 8px;
+        }
+
+        .source-row select,
+        .cleanup-row input {
+            border: 1px solid #c8d7d1;
+            border-radius: 10px;
+            padding: 10px;
+            width: 100%;
+        }
+
+        .manual-entry-panel {
+            margin-top: 8px;
+            display: none;
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            padding: 10px;
+            background: #fbfefd;
+        }
+
+        .manual-entry-panel.open {
+            display: block;
+        }
+
+        .manual-entry-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 8px;
+        }
+
+        .manual-entry-grid input,
+        .manual-entry-grid select {
+            border: 1px solid #c8d7d1;
+            border-radius: 10px;
+            padding: 10px;
+            width: 100%;
+        }
+
+        .feedback {
+            margin-top: 8px;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid var(--border);
+            white-space: pre-wrap;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 0.82rem;
+            min-height: 28px;
+            background: #fafdfc;
+        }
+
+        .feedback.info {
+            border-left-color: #0c4a6e;
+        }
+
+        .feedback.success {
+            border-left-color: #059669;
+            background: #ecfdf5;
+            color: #065f46;
+        }
+
+        .feedback.error {
+            border-left-color: var(--danger);
+            background: #fef2f2;
+            color: #7f1d1d;
+        }
+
+        .meta-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .pill {
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 0.82rem;
+            background: var(--accent-soft);
+            color: #0d4d47;
+        }
+
+        .output-box,
+        .cleanup-output {
+            margin: 0;
+            border: 1px solid #d5e1dc;
+            border-radius: 8px;
+            padding: 10px;
+            min-height: 60px;
+            background: #fcfefd;
+            color: #2d4540;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 0.8rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .pipeline-list {
+            display: grid;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .pipeline-item {
+            border: 1px solid #d5e1dc;
+            border-radius: 8px;
+            padding: 8px 10px;
+            background: #fcfefd;
+            font-size: 0.82rem;
+            color: #2d4540;
+        }
+
+        .pipeline-item.ok {
+            border-color: #9ad5bf;
+            background: #ecfdf5;
+            color: #065f46;
+        }
+
+        .pipeline-item.fail {
+            border-color: #fecaca;
+            background: #fef2f2;
+            color: #7f1d1d;
+        }
+
+        .table-wrap {
+            overflow: auto;
+            border: 1px solid #d5e1dc;
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 650px;
+            font-size: 0.82rem;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #e5ece8;
+            text-align: left;
+        }
+
+        th {
+            background: #f5faf8;
+            color: #355f58;
+            font-size: 0.78rem;
+        }
+
+        @media (max-width: 840px) {
+            .main {
+                padding: 16px;
+            }
+
+            .header {
+                padding: 14px;
+            }
+
+            .category-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .field-row,
+            .source-row,
+            .cleanup-row {
+                grid-template-columns: 1fr;
+            }
+
+            .action-row {
+                display: grid;
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="settings-overlay" class="overlay"></div>
+
+    <aside id="settings-panel" class="settings-panel" aria-hidden="true">
+        <div class="settings-head">
+            <h2>Settings and Data Management</h2>
+            <button id="close-settings" class="icon-btn" aria-label="Close settings">X</button>
+        </div>
+        <div class="settings-body">
+            <section class="block">
+                <h3>Server</h3>
+                <p style="margin: 0 0 8px; color: var(--muted); font-size: 0.84rem;">Start your API once via terminal: node server.js</p>
+                <div class="controls">
+                    <button id="server-status" class="btn">Status</button>
+                </div>
+                <pre id="server-feedback" class="feedback info">Ready</pre>
+            </section>
+
+            <section class="block">
+                <h3>Data Source and Actions</h3>
+                <div class="source-row" style="margin-bottom: 8px;">
+                    <select id="source-filter">
+                        <option value="localStorage">localStorage</option>
+                        <option value="selected-json">selected file</option>
+                        <option value="c-data-csv">c-data-csv</option>
+                        <option value="sql-server">sql-server</option>
+                    </select>
+                    <input id="json-file" type="file" accept=".json,.csv,application/json,text/csv" multiple>
+                    <button id="import-file" class="btn secondary">Import File</button>
+                </div>
+                <div class="controls">
+                    <button id="load-local" class="btn secondary">Load Local</button>
+                    <button id="load-cdata-csv" class="btn secondary">Load C:\Data CSV</button>
+                    <button id="load-database" class="btn secondary">Load Database</button>
+                    <button id="show-advanced-query" class="btn secondary">Advanced Query</button>
+                    <button id="toggle-manual-entry" class="btn secondary">Manual Entry</button>
+                    <button id="export-csv" class="btn secondary">Export CSV</button>
+                    <button id="upload-server" class="btn">Upload Loaded</button>
+                    <button id="refresh-source" class="btn secondary">Refresh View</button>
+                </div>
+                <div id="manual-entry-panel" class="manual-entry-panel" aria-hidden="true">
+                    <div class="manual-entry-grid">
+                        <input id="manual-activity" type="text" placeholder="Activity (example: Custom: SM64 bingo - isolate blockage)">
+                        <input id="manual-duration" type="number" min="1" step="1" placeholder="Duration (minutes)">
+                        <button id="manual-save" class="btn">Add Manual Session</button>
+                        <button id="manual-retry" class="btn secondary">Retry Pending Manual</button>
+                    </div>
+                </div>
+                <div class="meta-pills" style="margin-top: 8px;">
+                    <div id="count-pill" class="pill">Sessions: 0</div>
+                    <div id="updated-pill" class="pill">Last Updated: -</div>
+                    <div id="source-pill" class="pill">Source: none</div>
+                </div>
+            </section>
+
+            <section class="block">
+                <h3>Output Log</h3>
+                <pre id="output-box" class="output-box">Ready to load or import data.</pre>
+            </section>
+
+            <section class="block">
+                <h3>Pipeline Status</h3>
+                <div class="controls">
+                    <button id="check-pipeline" class="btn secondary">Check Pipeline</button>
+                </div>
+                <div id="pipeline-status" class="pipeline-list">
+                    <div class="pipeline-item">No pipeline check run yet.</div>
+                </div>
+            </section>
+
+            <section class="block">
+                <h3>History</h3>
+                <div class="table-wrap">
+                    <table id="history-table" hidden>
+                        <thead>
+                            <tr>
+                                <th>UploadId</th>
+                                <th>Category</th>
+                                <th>Detail</th>
+                                <th>Target</th>
+                                <th>Mindset</th>
+                                <th>Tags</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Duration</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body"></tbody>
+                    </table>
+                </div>
+                <div id="empty-history" style="margin-top: 8px; color: var(--muted); font-size: 0.84rem;">No sessions loaded.</div>
+            </section>
+
+            <section class="block">
+                <h3>Cleanup (Safe Mode)</h3>
+                <div class="cleanup-row">
+                    <input id="cleanup-upload-id" type="number" min="1" placeholder="UploadId">
+                    <input id="cleanup-confirm" type="text" placeholder="Type DELETE to commit">
+                    <button id="cleanup-commit" class="btn danger">Commit Delete</button>
+                </div>
+                <div class="controls" style="margin-top: 8px;">
+                    <button id="cleanup-list" class="btn secondary">List Latest</button>
+                    <button id="cleanup-preview" class="btn secondary">Preview Delete</button>
+                </div>
+                <pre id="cleanup-output" class="cleanup-output">No cleanup actions yet.</pre>
+            </section>
+        </div>
+    </aside>
+
+    <main class="shell">
+        <header class="header">
+            <div>
+                <h1 class="heading">Activity Tracker</h1>
+                <p class="subhead">Start fast. Stay focused.</p>
+            </div>
+            <div class="header-actions">
+                <button id="open-settings" class="btn secondary">Settings</button>
+            </div>
+        </header>
+
+        <section class="main">
+            <div class="timer-shell">
+                <p id="active-label">No active session</p>
+                <div id="timer">00:00:00</div>
+                <p class="timer-caption">Current tracked session</p>
+            </div>
+
+            <div class="category-grid">
+                <button class="category-btn" data-category="Study">Study</button>
+                <button class="category-btn" data-category="Sleep">Sleep</button>
+                <button id="custom-toggle" class="category-btn" data-category="Custom">Custom</button>
+            </div>
+
+            <div id="custom-panel" class="custom-panel" aria-hidden="true">
+                <div class="field-row">
+                    <select id="saved-custom-activities">
+                        <option value="">Saved activity...</option>
+                    </select>
+                    <input id="custom-activity-name" type="text" placeholder="Type activity detail">
+                    <button id="start-custom" class="btn">Start</button>
+                </div>
+                <div class="field-row">
+                    <input id="activity-tags" type="text" placeholder="Tags (comma separated)">
+                    <input id="custom-target-note" type="text" placeholder="Optional target/comment (example: 46 M 07 S)">
+                    <select id="custom-mindset">
+                        <option value="">Mindset/Philosophy (optional)</option>
+                        <option value="1">On treadmill (1)</option>
+                        <option value="0">Off treadmill (0)</option>
+                    </select>
+                </div>
+                <div class="field-row">
+                    <button id="save-custom-activity" class="btn secondary">Save Activity</button>
+                </div>
+                <div class="quick-picks">
+                    <button class="quick-pick" data-pick="Treadmill Walking">Treadmill Walking</button>
+                    <button class="quick-pick" data-pick="Emerald Expansion Modding">Emerald Expansion Modding</button>
+                    <button class="quick-pick" data-pick="LOTR Reading">LOTR Reading</button>
+                    <button class="quick-pick" data-pick="Family Time">Family Time</button>
+                </div>
+            </div>
+
+            <div class="action-row">
+                <button id="stop-button" class="btn secondary">Stop</button>
+                <button id="export-raw-button" class="btn secondary">Export</button>
+                <button id="save-json" class="btn secondary">Save JSON</button>
+                <button id="save-demo-folder" class="btn secondary">Save to C:\Data</button>
+                <button id="upload-current" class="btn">Upload Current</button>
+                <button id="load-db-button" class="btn secondary">Load Database</button>
+                <button id="clear-button" class="btn danger">Clear All</button>
+            </div>
+
+            <p id="status-message"></p>
+
+            <section class="mini-history">
+                <h3>Recent Sessions</h3>
+                <div id="activity-history"></div>
+            </section>
+
+            <section class="block">
+                <h3>Database Results</h3>
+                <div id="database-status" style="margin: 0 0 8px; color: var(--muted); font-size: 0.84rem;">No database rows loaded.</div>
+                <div class="table-wrap">
+                    <table id="database-table" hidden>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Date</th>
+                                <th>Activity Name</th>
+                                <th>Duration (H M S)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="database-body"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <div class="inline-info">
+                <details>
+                    <summary>i What counts in each category?</summary>
+                    <ul>
+                        <li><strong>Study:</strong> Passive learning and information intake.</li>
+                        <li><strong>Sleep:</strong> Sleep only.</li>
+                        <li><strong>Custom:</strong> Any personal routine like treadmill, reading, family time, or project work.</li>
+                    </ul>
+                </details>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const STORAGE_KEY = "activityHistory";
+        const CUSTOM_ACTIVITIES_KEY = "activityCustomCategories";
+        const MANUAL_QUEUE_KEY = "manualActivityPendingQueue";
+        const CATEGORIES = ["Study", "Sleep", "Custom"];
+
+        function normalizeText(value) {
+            return String(value || "").replace(/\s+/g, " ").trim();
+        }
+
+        function parseTags(value) {
+            return String(value || "")
+                .split(",")
+                .map((part) => normalizeText(part))
+                .filter(Boolean);
+        }
+
+        function formatHms(milliseconds) {
+            const seconds = Math.max(0, Math.floor(milliseconds / 1000));
+            const h = String(Math.floor(seconds / 3600)).padStart(2, "0");
+            const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+            const s = String(seconds % 60).padStart(2, "0");
+            return h + ":" + m + ":" + s;
+        }
+
+        function formatDurationHms(totalSeconds) {
+            const safeSeconds = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+            const hours = Math.floor(safeSeconds / 3600);
+            const minutes = Math.floor((safeSeconds % 3600) / 60);
+            const seconds = String(safeSeconds % 60).padStart(2, "0");
+            return hours + " H " + minutes + " M " + seconds + " S";
+        }
+
+        function formatDurationFromMinutes(totalMinutes) {
+            const safeMinutes = Math.max(0, Number(totalMinutes) || 0);
+            return formatDurationHms(Math.round(safeMinutes * 60));
+        }
+
+        function parseDate(value) {
+            if (!value) return null;
+            const parsed = new Date(value);
+            return Number.isNaN(parsed.getTime()) ? null : parsed;
+        }
+
+        function formatDate(value) {
+            const parsed = parseDate(value);
+            return parsed ? parsed.toLocaleString() : "-";
+        }
+
+        function formatDuration(startValue, endValue) {
+            const start = parseDate(startValue);
+            const end = parseDate(endValue);
+            if (!start || !end) return "-";
+            return formatDurationHms(Math.floor((end.getTime() - start.getTime()) / 1000));
+        }
+
+        function formatTags(tags) {
+            if (!Array.isArray(tags) || tags.length === 0) return "-";
+            return tags.join(", ");
+        }
+
+        function normalizeTarget(value) {
+            return normalizeText(value);
+        }
+
+        function normalizeMindset(value) {
+            const safe = normalizeText(value).toLowerCase();
+            if (safe === "1" || safe === "on") return "1";
+            if (safe === "0" || safe === "off") return "0";
+            return "";
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function normalizeCategory(rawCategory) {
+            const safe = normalizeText(rawCategory).toLowerCase();
+            if (safe === "study") return "Study";
+            if (safe === "sleep") return "Sleep";
+            if (safe === "custom") return "Custom";
+            return "Custom";
+        }
+
+        class TrackerModel {
+            constructor(seedHistory) {
+                this.history = Array.isArray(seedHistory) ? seedHistory.slice() : [];
+                this.activeIndex = -1;
+                this.timerStartedAt = 0;
+                this.timerRunning = false;
+            }
+
+            get nowIso() {
+                return new Date().toISOString();
+            }
+
+            get activeSession() {
+                return this.activeIndex < 0 ? null : this.history[this.activeIndex] || null;
+            }
+
+            startSession(category, detail, tags, target, mindset) {
+                const resolvedCategory = normalizeCategory(category);
+                const resolvedDetail = normalizeText(detail);
+                const resolvedTarget = normalizeTarget(target);
+                const resolvedMindset = normalizeMindset(mindset);
+                if (resolvedCategory === "Custom" && !resolvedDetail) {
+                    throw new Error("Custom activity needs a detail.");
+                }
+
+                this.stopSession();
+
+                const session = {
+                    category: resolvedCategory,
+                    detail: resolvedCategory === "Custom" ? resolvedDetail : resolvedCategory,
+                    tags: Array.isArray(tags) ? tags : [],
+                    target: resolvedTarget,
+                    mindset: resolvedMindset,
+                    startTime: this.nowIso,
+                    endTime: null,
+                    uploadId: null
+                };
+
+                this.history.push(session);
+                this.activeIndex = this.history.length - 1;
+                this.timerStartedAt = Date.now();
+                this.timerRunning = true;
+                return session;
+            }
+
+            stopSession() {
+                if (!this.activeSession) {
+                    this.timerRunning = false;
+                    return null;
+                }
+
+                const ended = this.activeSession;
+
+                if (!ended.endTime) {
+                    ended.endTime = this.nowIso;
+                }
+
+                this.timerRunning = false;
+                this.activeIndex = -1;
+                return ended;
+            }
+
+            getElapsedMilliseconds() {
+                if (!this.activeSession || !this.timerRunning) return 0;
+                return Date.now() - this.timerStartedAt;
+            }
+
+            clearAll() {
+                this.history = [];
+                this.activeIndex = -1;
+                this.timerRunning = false;
+            }
+
+            replaceHistory(sessions) {
+                this.history = Array.isArray(sessions) ? sessions.slice() : [];
+                this.activeIndex = -1;
+                this.timerRunning = false;
+            }
+        }
+
+        function parseCsvRows(text) {
+            const rows = [];
+            let current = "";
+            let row = [];
+            let inQuotes = false;
+
+            for (let index = 0; index < text.length; index += 1) {
+                const char = text[index];
+                const next = text[index + 1];
+
+                if (char === '"') {
+                    if (inQuotes && next === '"') {
+                        current += '"';
+                        index += 1;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === "," && !inQuotes) {
+                    row.push(current);
+                    current = "";
+                } else if ((char === "\n" || char === "\r") && !inQuotes) {
+                    if (char === "\r" && next === "\n") {
+                        index += 1;
+                    }
+                    row.push(current);
+                    if (row.some((cell) => cell !== "")) rows.push(row);
+                    row = [];
+                    current = "";
+                } else {
+                    current += char;
+                }
+            }
+
+            if (current !== "" || row.length > 0) {
+                row.push(current);
+                if (row.some((cell) => cell !== "")) rows.push(row);
+            }
+
+            return rows;
+        }
+
+        function parseCsvSessions(text) {
+            const rows = parseCsvRows(text);
+            if (rows.length < 2) throw new Error("CSV does not contain rows.");
+
+            const headers = rows[0].map((cell) => String(cell).trim().toLowerCase());
+            const startIndex = headers.indexOf("start");
+            const endIndex = headers.indexOf("end");
+            const categoryIndex = headers.indexOf("category");
+            const detailIndex = headers.indexOf("detail");
+            const tagsIndex = headers.indexOf("tags");
+            const mindsetIndex = headers.indexOf("mindset") !== -1
+                ? headers.indexOf("mindset")
+                : headers.indexOf("philosophy") !== -1
+                    ? headers.indexOf("philosophy")
+                    : headers.indexOf("mindset_tag");
+            const targetIndex = headers.indexOf("target") !== -1
+                ? headers.indexOf("target")
+                : headers.indexOf("comment") !== -1
+                    ? headers.indexOf("comment")
+                    : headers.indexOf("note");
+            const uploadIdIndex = headers.indexOf("uploadid") !== -1 ? headers.indexOf("uploadid") : headers.indexOf("upload_id");
+
+            if (startIndex === -1 || endIndex === -1) throw new Error("CSV must include Start and End.");
+
+            return rows.slice(1).map((row) => {
+                const rawCategory = categoryIndex === -1 ? "Custom" : row[categoryIndex];
+                const rawDetail = detailIndex === -1 ? "" : row[detailIndex];
+                const uploadRaw = uploadIdIndex === -1 ? "" : row[uploadIdIndex];
+                const parsedUpload = Number(uploadRaw);
+
+                return {
+                    category: normalizeCategory(rawCategory),
+                    detail: normalizeText(rawDetail) || normalizeCategory(rawCategory),
+                    tags: tagsIndex === -1 ? [] : parseTags(row[tagsIndex] || ""),
+                    target: targetIndex === -1 ? "" : normalizeTarget(row[targetIndex] || ""),
+                    mindset: mindsetIndex === -1 ? "" : normalizeMindset(row[mindsetIndex] || ""),
+                    startTime: row[startIndex] ? String(row[startIndex]).trim() : null,
+                    endTime: row[endIndex] ? String(row[endIndex]).trim() : null,
+                    uploadId: Number.isInteger(parsedUpload) && parsedUpload > 0 ? parsedUpload : null
+                };
+            }).filter((session) => session.startTime || session.endTime);
+        }
+
+        function csvEscape(value) {
+            const text = value == null ? "" : String(value);
+            if (text.includes(",") || text.includes("\"") || text.includes("\n")) {
+                return "\"" + text.replace(/\"/g, "\"\"") + "\"";
+            }
+            return text;
+        }
+
+        function downloadTextFile(fileName, text, mimeType) {
+            const blob = new Blob([text], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = fileName;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function buildCsvRows(sessions) {
+            const header = ["UploadId", "Category", "Detail", "Target", "Mindset", "Tags", "Start", "End", "Duration", "Status"];
+            const rows = sessions.map((session) => {
+                return [
+                    session.uploadId == null ? "" : String(session.uploadId),
+                    session.category,
+                    session.detail,
+                    normalizeTarget(session.target || ""),
+                    normalizeMindset(session.mindset || ""),
+                    formatTags(session.tags),
+                    formatDate(session.startTime),
+                    formatDate(session.endTime),
+                    formatDuration(session.startTime, session.endTime),
+                    session.endTime ? "Complete" : "In progress"
+                ];
+            });
+
+            return [header].concat(rows)
+                .map((cols) => cols.map(csvEscape).join(","))
+                .join("\n");
+        }
+
+        function getRawLogSession(model) {
+            if (model.activeSession) {
+                return model.activeSession;
+            }
+
+            if (model.history.length === 0) {
+                return null;
+            }
+
+            return model.history[model.history.length - 1];
+        }
+
+        function getSavedCustomActivities() {
+            try {
+                const parsed = JSON.parse(localStorage.getItem(CUSTOM_ACTIVITIES_KEY));
+                if (!Array.isArray(parsed)) return [];
+                return parsed.map((item) => normalizeText(item)).filter(Boolean);
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function setSavedCustomActivities(values) {
+            localStorage.setItem(CUSTOM_ACTIVITIES_KEY, JSON.stringify(values));
+        }
+
+        async function callServerAction(action) {
+            try {
+                const response = await fetch("http://localhost:3000/api/server/" + action, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" }
+                });
+                const data = await response.json();
+                return {
+                    ok: response.ok && !!data.success,
+                    message: data.message || "Done"
+                };
+            } catch (error) {
+                return {
+                    ok: false,
+                    message: "Server is not running on port 3000. Run: node server.js"
+                };
+            }
+        }
+
+        function normalizeSession(raw) {
+            const category = normalizeCategory(raw.category || raw.Category || "Custom");
+            const detail = normalizeText(raw.detail || raw.Detail || raw.name || raw.ActivityName || category);
+            const tags = Array.isArray(raw.tags) ? raw.tags : parseTags(raw.tags || raw.Tags || "");
+            return {
+                category,
+                detail,
+                tags,
+                target: normalizeTarget(raw.target || raw.Target || raw.comment || raw.Comment || raw.note || raw.Note || ""),
+                mindset: normalizeMindset(raw.mindset || raw.Mindset || raw.philosophy || raw.Philosophy || raw.mindset_tag || raw.MindsetTag || ""),
+                startTime: raw.startTime || raw.StartTimeUtc || raw.StartTimeRaw || null,
+                endTime: raw.endTime || raw.EndTimeUtc || raw.EndTimeRaw || null,
+                uploadId: raw.uploadId || raw.UploadId || null
+            };
+        }
+
+        function sortSessions(sessions) {
+            return sessions.slice().sort((a, b) => {
+                const aTime = parseDate(a.startTime) ? parseDate(a.startTime).getTime() : 0;
+                const bTime = parseDate(b.startTime) ? parseDate(b.startTime).getTime() : 0;
+                return bTime - aTime;
+            });
+        }
+
+        function createUiController(model) {
+            const dom = {
+                timer: document.getElementById("timer"),
+                activeLabel: document.getElementById("active-label"),
+                statusMessage: document.getElementById("status-message"),
+                historyList: document.getElementById("activity-history"),
+                databaseStatus: document.getElementById("database-status"),
+                databaseTable: document.getElementById("database-table"),
+                databaseBody: document.getElementById("database-body"),
+                customPanel: document.getElementById("custom-panel"),
+                customToggle: document.getElementById("custom-toggle"),
+                customName: document.getElementById("custom-activity-name"),
+                tagsInput: document.getElementById("activity-tags"),
+                customTargetNote: document.getElementById("custom-target-note"),
+                customMindset: document.getElementById("custom-mindset"),
+                savedCustomSelect: document.getElementById("saved-custom-activities"),
+                settingsPanel: document.getElementById("settings-panel"),
+                settingsOverlay: document.getElementById("settings-overlay"),
+                historyTable: document.getElementById("history-table"),
+                historyBody: document.getElementById("history-body"),
+                emptyHistory: document.getElementById("empty-history"),
+                countPill: document.getElementById("count-pill"),
+                updatedPill: document.getElementById("updated-pill"),
+                sourcePill: document.getElementById("source-pill"),
+                outputBox: document.getElementById("output-box"),
+                pipelineStatus: document.getElementById("pipeline-status"),
+                cleanupOutput: document.getElementById("cleanup-output"),
+                serverFeedback: document.getElementById("server-feedback"),
+                sourceFilter: document.getElementById("source-filter"),
+                jsonFile: document.getElementById("json-file"),
+                manualEntryPanel: document.getElementById("manual-entry-panel"),
+                manualActivity: document.getElementById("manual-activity"),
+                manualDuration: document.getElementById("manual-duration")
+            };
+
+            let timerInterval = null;
+            let sourceType = "localStorage";
+            let selectedJsonLabel = "selected-file";
+            let cDataCsvLabel = "C:\\Data\\MasterActivityLog.csv";
+            let lastLoadedSessions = [];
+            let dbMirrorIntervalId = null;
+            const sourceStore = {
+                localStorage: [],
+                "selected-json": [],
+                "c-data-csv": [],
+                "sql-server": []
+            };
+
+            function persistHistory() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(model.history));
+            }
+
+            function setStatus(message, isError) {
+                dom.statusMessage.textContent = message;
+                dom.statusMessage.className = isError ? "error" : "success";
+                dom.statusMessage.style.display = "block";
+                setTimeout(() => {
+                    dom.statusMessage.style.display = "none";
+                }, 4000);
+            }
+
+            function setOutput(title, payload) {
+                const timestamp = new Date().toLocaleString();
+                const body = typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
+                dom.outputBox.textContent = "[" + timestamp + "] " + title + "\n" + body;
+            }
+
+            function setCleanupOutput(title, payload) {
+                const timestamp = new Date().toLocaleString();
+                const body = typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
+                dom.cleanupOutput.textContent = "[" + timestamp + "] " + title + "\n" + body;
+            }
+
+            function renderPipelineStatus(items) {
+                if (!Array.isArray(items) || items.length === 0) {
+                    dom.pipelineStatus.innerHTML = "<div class=\"pipeline-item\">No pipeline check run yet.</div>";
+                    return;
+                }
+
+                dom.pipelineStatus.innerHTML = items.map((item) => {
+                    const cssClass = item.ok ? "ok" : "fail";
+                    const label = item.ok ? "PASS" : "FAIL";
+                    return "<div class=\"pipeline-item " + cssClass + "\">" +
+                        "<strong>" + escapeHtml(label + " - " + item.stage) + "</strong><br>" +
+                        escapeHtml(item.detail) +
+                        "</div>";
+                }).join("");
+            }
+
+            function buildRawLogActivity(session) {
+                const startTime = parseDate(session && session.startTime);
+                const endTime = parseDate(session && session.endTime) || new Date();
+                const dateValue = startTime ? startTime.toISOString().slice(0, 10) : endTime.toISOString().slice(0, 10);
+                const activityName = normalizeText((session && session.detail) || (session && session.category) || "");
+                const durationSeconds = Math.max(0, Math.round((endTime.getTime() - (startTime ? startTime.getTime() : endTime.getTime())) / 1000));
+                const durationMinutes = Math.max(0, Math.floor(durationSeconds / 60));
+
+                if (!activityName) {
+                    return null;
+                }
+
+                return {
+                    date: dateValue,
+                    activity_name: activityName,
+                    duration_minutes: durationMinutes,
+                    duration_seconds: durationSeconds
+                };
+            }
+
+            async function importRawLogToSqlite(session) {
+                const activity = buildRawLogActivity(session);
+                if (!activity) {
+                    return { ok: false, message: "No valid session data to import." };
+                }
+
+                try {
+                    const response = await fetch("http://localhost:3000/api/activities/import", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ activity })
+                    });
+                    const data = await response.json();
+
+                    if (!response.ok || !data.success) {
+                        return {
+                            ok: false,
+                            message: data && data.error ? data.error : "SQLite import failed.",
+                            data
+                        };
+                    }
+
+                    return {
+                        ok: true,
+                        message: "Imported " + (data.inserted || 0) + " row(s) into SQLite.",
+                        data
+                    };
+                } catch (error) {
+                    return {
+                        ok: false,
+                        message: "Could not reach /api/activities/import: " + error.message
+                    };
+                }
+            }
+
+            async function checkPipelineStatus() {
+                const checks = [];
+                const session = getRawLogSession(model);
+
+                checks.push({
+                    stage: "Tracker session available",
+                    ok: !!session,
+                    detail: session
+                        ? "Ready to export/import current or last session."
+                        : "No tracked session found yet. Start and stop a session first."
+                });
+
+                try {
+                    const healthResponse = await fetch("http://localhost:3000/health");
+                    const healthData = await healthResponse.json();
+                    checks.push({
+                        stage: "Node server health",
+                        ok: healthResponse.ok,
+                        detail: healthResponse.ok
+                            ? (healthData.status || "Server is healthy")
+                            : "Health endpoint returned HTTP " + healthResponse.status
+                    });
+                } catch (error) {
+                    checks.push({
+                        stage: "Node server health",
+                        ok: false,
+                        detail: "Could not reach /health: " + error.message
+                    });
+                }
+
+                try {
+                    const sqliteResponse = await fetch("http://localhost:3000/api/activities");
+                    const sqliteData = await sqliteResponse.json();
+                    const sqliteCount = Array.isArray(sqliteData.activities) ? sqliteData.activities.length : 0;
+                    checks.push({
+                        stage: "SQLite API (/api/activities)",
+                        ok: sqliteResponse.ok && !!sqliteData.success,
+                        detail: sqliteResponse.ok && !!sqliteData.success
+                            ? "Rows available: " + sqliteCount
+                            : (sqliteData.error || "SQLite read failed")
+                    });
+                } catch (error) {
+                    checks.push({
+                        stage: "SQLite API (/api/activities)",
+                        ok: false,
+                        detail: "Could not reach SQLite API: " + error.message
+                    });
+                }
+
+                try {
+                    const sqlResponse = await fetch("http://localhost:3000/api/activity/sessions");
+                    const sqlData = await sqlResponse.json();
+                    checks.push({
+                        stage: "SQL Server API (/api/activity/sessions)",
+                        ok: sqlResponse.ok && !!sqlData.success,
+                        detail: sqlResponse.ok && !!sqlData.success
+                            ? "Rows available: " + (sqlData.count || 0)
+                            : (sqlData.error || "SQL Server read failed")
+                    });
+                } catch (error) {
+                    checks.push({
+                        stage: "SQL Server API (/api/activity/sessions)",
+                        ok: false,
+                        detail: "Could not reach SQL Server sessions API: " + error.message
+                    });
+                }
+
+                checks.push({
+                    stage: "Python CSV importer path",
+                    ok: true,
+                    detail: "Optional fallback path is still available via tracker_csv_to_sqlite.py and raw_logs.csv."
+                });
+
+                renderPipelineStatus(checks);
+                return checks;
+            }
+
+            function openSettings() {
+                dom.settingsPanel.classList.add("open");
+                dom.settingsOverlay.classList.add("open");
+                dom.settingsPanel.setAttribute("aria-hidden", "false");
+            }
+
+            function closeSettings() {
+                dom.settingsPanel.classList.remove("open");
+                dom.settingsOverlay.classList.remove("open");
+                dom.settingsPanel.setAttribute("aria-hidden", "true");
+            }
+
+            function renderCustomActivitiesSelect() {
+                const activities = getSavedCustomActivities();
+                dom.savedCustomSelect.innerHTML = "<option value=\"\">Saved activity...</option>" +
+                    activities.map((name) => "<option value=\"" + escapeHtml(name) + "\">" + escapeHtml(name) + "</option>").join("");
+            }
+
+            function addSavedCustomActivity(name) {
+                const normalized = normalizeText(name);
+                if (!normalized) {
+                    setStatus("Enter a custom activity before saving.", true);
+                    return;
+                }
+
+                const list = getSavedCustomActivities();
+                if (list.some((item) => item.toLowerCase() === normalized.toLowerCase())) {
+                    setStatus("That activity is already saved.", true);
+                    return;
+                }
+
+                list.push(normalized);
+                list.sort((a, b) => a.localeCompare(b));
+                setSavedCustomActivities(list);
+                renderCustomActivitiesSelect();
+                setStatus("Saved activity: " + normalized, false);
+            }
+
+            function setActiveCategoryButton(category) {
+                document.querySelectorAll(".category-btn").forEach((element) => {
+                    element.classList.remove("active");
+                    if (element.getAttribute("data-category") === category) {
+                        element.classList.add("active");
+                    }
+                });
+            }
+
+            function renderMainHistory() {
+                const rows = sortSessions(model.history).slice(0, 8);
+                dom.historyList.innerHTML = rows.map((session) => {
+                    const targetNote = normalizeTarget(session.target || "");
+                    const detailView = targetNote
+                        ? session.detail + " | Target: " + targetNote
+                        : session.detail;
+                    return "<div class=\"mini-item\">" +
+                        "[" + escapeHtml(session.category) + "] " +
+                        escapeHtml(detailView) +
+                        " | " + escapeHtml(formatDate(session.startTime)) +
+                        " -> " + escapeHtml(formatDate(session.endTime)) +
+                        "</div>";
+                }).join("");
+            }
+
+            function renderTimer() {
+                if (!model.activeSession || !model.timerRunning) {
+                    dom.timer.textContent = "00:00:00";
+                    dom.activeLabel.textContent = "No active session";
+                    return;
+                }
+
+                const active = model.activeSession;
+                dom.timer.textContent = formatHms(model.getElapsedMilliseconds());
+                dom.activeLabel.textContent = active.category + " - " + active.detail;
+            }
+
+            function startTimerLoop() {
+                if (timerInterval) clearInterval(timerInterval);
+                timerInterval = setInterval(renderTimer, 1000);
+            }
+
+            function stopTimerLoop() {
+                if (timerInterval) clearInterval(timerInterval);
+                timerInterval = null;
+            }
+
+            function renderSettingsTable(sessions, sourceLabel) {
+                const normalized = sortSessions((sessions || []).map(normalizeSession));
+                lastLoadedSessions = normalized;
+                dom.countPill.textContent = "Sessions: " + normalized.length;
+                dom.updatedPill.textContent = "Last Updated: " + new Date().toLocaleTimeString();
+                dom.sourcePill.textContent = "Source: " + sourceLabel;
+
+                if (normalized.length === 0) {
+                    dom.historyTable.hidden = true;
+                    dom.emptyHistory.style.display = "block";
+                    setOutput("View refreshed", { source: sourceLabel, sessions: 0 });
+                    return;
+                }
+
+                dom.historyBody.innerHTML = normalized.map((session) => {
+                    const status = session.endTime ? "Complete" : "In progress";
+                    return "<tr>" +
+                        "<td>" + escapeHtml(session.uploadId == null ? "-" : String(session.uploadId)) + "</td>" +
+                        "<td>" + escapeHtml(session.category) + "</td>" +
+                        "<td>" + escapeHtml(session.detail) + "</td>" +
+                        "<td>" + escapeHtml(normalizeTarget(session.target || "") || "-") + "</td>" +
+                        "<td>" + escapeHtml(normalizeMindset(session.mindset || "") || "-") + "</td>" +
+                        "<td>" + escapeHtml(formatTags(session.tags)) + "</td>" +
+                        "<td>" + escapeHtml(formatDate(session.startTime)) + "</td>" +
+                        "<td>" + escapeHtml(formatDate(session.endTime)) + "</td>" +
+                        "<td>" + escapeHtml(formatDuration(session.startTime, session.endTime)) + "</td>" +
+                        "<td>" + escapeHtml(status) + "</td>" +
+                        "</tr>";
+                }).join("");
+
+                dom.historyTable.hidden = false;
+                dom.emptyHistory.style.display = "none";
+                setOutput("View refreshed", { source: sourceLabel, sessions: normalized.length });
+            }
+
+            function renderBySource(type) {
+                const sessions = sourceStore[type] || [];
+                let label = type;
+                if (type === "selected-json") {
+                    label = selectedJsonLabel;
+                } else if (type === "c-data-csv") {
+                    label = cDataCsvLabel;
+                }
+                sourceType = type;
+                renderSettingsTable(sessions, label);
+            }
+
+            function readLocalHistory() {
+                try {
+                    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+                    sourceStore.localStorage = Array.isArray(parsed) ? parsed : [];
+                } catch (error) {
+                    sourceStore.localStorage = [];
+                }
+                dom.sourceFilter.value = "localStorage";
+                renderBySource("localStorage");
+            }
+
+            async function readDatabaseSessions() {
+                try {
+                    const response = await fetch("http://localhost:3000/api/activity/sessions");
+                    const data = await response.json();
+                    if (response.ok && data.success && Array.isArray(data.sessions)) {
+                        sourceStore["sql-server"] = data.sessions.map((item) => {
+                            return {
+                                category: normalizeCategory(item.Category || item.ActivityName),
+                                detail: normalizeText(item.Detail || item.ActivityName || "Custom"),
+                                tags: [],
+                                startTime: item.StartTimeUtc || item.StartTimeRaw,
+                                endTime: item.EndTimeUtc || item.EndTimeRaw,
+                                uploadId: item.UploadId || null
+                            };
+                        });
+                    } else {
+                        sourceStore["sql-server"] = [];
+                    }
+                    dom.sourceFilter.value = "sql-server";
+                    renderBySource("sql-server");
+                } catch (error) {
+                    sourceStore["sql-server"] = [];
+                    renderBySource("sql-server");
+                    setOutput("Database load failed", { error: error.message });
+                }
+            }
+
+            async function readMasterCsvSessions() {
+                try {
+                    const response = await fetch("http://localhost:3000/api/activity/load-master-csv");
+                    const data = await response.json();
+
+                    if (!response.ok || !data.success || !Array.isArray(data.sessions)) {
+                        sourceStore["c-data-csv"] = [];
+                        dom.sourceFilter.value = "c-data-csv";
+                        renderBySource("c-data-csv");
+                        setOutput("C:\\Data CSV load failed", data);
+                        return;
+                    }
+
+                    sourceStore["c-data-csv"] = data.sessions.map(normalizeSession);
+                    cDataCsvLabel = data.filePath || "C:\\Data\\MasterActivityLog.csv";
+                    dom.sourceFilter.value = "c-data-csv";
+                    renderBySource("c-data-csv");
+                    setStatus("Loaded " + sourceStore["c-data-csv"].length + " sessions from C:\\Data.", false);
+                } catch (error) {
+                    sourceStore["c-data-csv"] = [];
+                    dom.sourceFilter.value = "c-data-csv";
+                    renderBySource("c-data-csv");
+                    setOutput("C:\\Data CSV load failed", { error: error.message });
+                    setStatus("Could not load C:\\Data CSV.", true);
+                }
+            }
+
+            async function showAdvancedQuery() {
+                try {
+                    const response = await fetch("http://localhost:3000/api/activity/advanced-query");
+                    const data = await response.json();
+
+                    if (!response.ok || !data.success || !data.mCode) {
+                        setOutput("Advanced query fetch failed", data);
+                        setStatus("Could not load advanced query.", true);
+                        return;
+                    }
+
+                    setOutput("Advanced Power Query M", data.mCode);
+                    setStatus("Advanced query loaded in Output Log.", false);
+                } catch (error) {
+                    setOutput("Advanced query fetch failed", { error: error.message });
+                    setStatus("Could not load advanced query.", true);
+                }
+            }
+
+            function toggleManualEntryPanel() {
+                const isOpen = dom.manualEntryPanel.classList.toggle("open");
+                dom.manualEntryPanel.setAttribute("aria-hidden", isOpen ? "false" : "true");
+            }
+
+            function getPendingManualQueue() {
+                try {
+                    const parsed = JSON.parse(localStorage.getItem(MANUAL_QUEUE_KEY) || "[]");
+                    return Array.isArray(parsed) ? parsed : [];
+                } catch (error) {
+                    return [];
+                }
+            }
+
+            function setPendingManualQueue(queue) {
+                localStorage.setItem(MANUAL_QUEUE_KEY, JSON.stringify(Array.isArray(queue) ? queue : []));
+            }
+
+            function queuePendingManual(payload) {
+                const queue = getPendingManualQueue();
+                queue.push(payload);
+                setPendingManualQueue(queue);
+            }
+
+            async function saveManualActivityToServer(activityText, durationMinutes) {
+                const payload = {
+                    activity: activityText,
+                    durationMinutes: durationMinutes,
+                    createdAtUtc: new Date().toISOString()
+                };
+
+                try {
+                    const response = await fetch("http://localhost:3000/api/manual-activity", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok || !data.success) {
+                        queuePendingManual(payload);
+                        return {
+                            ok: false,
+                            message: data && data.error ? data.error : "Manual activity save failed."
+                        };
+                    }
+
+                    return {
+                        ok: true,
+                        message: "Manual activity saved to SQL Server."
+                    };
+                } catch (error) {
+                    queuePendingManual(payload);
+                    return {
+                        ok: false,
+                        message: "Server unavailable. Manual entry queued for retry."
+                    };
+                }
+            }
+
+            async function retryPendingManualQueue() {
+                const queue = getPendingManualQueue();
+                if (queue.length === 0) {
+                    setStatus("No pending manual entries to retry.", false);
+                    return;
+                }
+
+                const remaining = [];
+                for (let i = 0; i < queue.length; i += 1) {
+                    const payload = queue[i];
+                    try {
+                        const response = await fetch("http://localhost:3000/api/manual-activity", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(payload)
+                        });
+                        const data = await response.json();
+                        if (!response.ok || !data.success) {
+                            remaining.push(payload);
+                        }
+                    } catch (error) {
+                        remaining.push(payload);
+                    }
+                }
+
+                setPendingManualQueue(remaining);
+                if (remaining.length === 0) {
+                    setStatus("All pending manual entries synced.", false);
+                } else {
+                    setStatus("Pending manual entries remaining: " + remaining.length, true);
+                }
+            }
+
+            async function addManualSession() {
+                const activityText = normalizeText(dom.manualActivity.value);
+                const durationMinutes = Number(dom.manualDuration.value);
+
+                if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+                    setStatus("Manual duration must be greater than 0 minutes.", true);
+                    return;
+                }
+
+                if (!activityText) {
+                    setStatus("Manual activity text is required.", true);
+                    return;
+                }
+
+                const endDate = new Date();
+
+                const durationMs = Math.round(durationMinutes * 60000);
+                const startDate = new Date(endDate.getTime() - durationMs);
+
+                const manualSession = {
+                    category: "Custom",
+                    detail: activityText,
+                    tags: [],
+                    startTime: startDate.toISOString(),
+                    endTime: endDate.toISOString(),
+                    uploadId: null
+                };
+
+                model.history.push(manualSession);
+
+                persistHistory();
+                renderMainHistory();
+                readLocalHistory();
+                const saveResult = await saveManualActivityToServer(activityText, Math.round(durationMinutes));
+                if (saveResult.ok) {
+                    setStatus("Manual session added and synced.", false);
+                } else {
+                    setStatus("Manual session added locally. " + saveResult.message, true);
+                }
+
+                dom.manualActivity.value = "";
+                dom.manualDuration.value = "";
+            }
+
+            async function uploadSessions(sessionsToUpload, fileNamePrefix) {
+                const payload = {
+                    sessions: sessionsToUpload,
+                    fileName: fileNamePrefix + "-" + new Date().toISOString().split("T")[0] + ".json",
+                    sourceLabel: "html-tracker"
+                };
+
+                const response = await fetch("http://localhost:3000/api/activity/upload", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                return { ok: response.ok && result.success, result };
+            }
+
+            async function saveSessionToServer(session) {
+                const payload = {
+                    uploadId: String(session && session.uploadId != null ? session.uploadId : ""),
+                    category: String(session && session.category ? session.category : ""),
+                    detail: String(session && session.detail ? session.detail : ""),
+                    tags: Array.isArray(session && session.tags) ? session.tags.join(", ") : String(session && session.tags ? session.tags : ""),
+                    start: String(session && session.startTime ? session.startTime : ""),
+                    end: String(session && session.endTime ? session.endTime : "")
+                };
+
+                try {
+                    const response = await fetch("http://localhost:3000/api/save-session", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok || !data.success) {
+                        console.error("save-session request failed", data);
+                        return;
+                    }
+
+                    console.log("save-session success", data);
+                } catch (error) {
+                    console.error("save-session fetch failed", error);
+                }
+            }
+
+            async function saveSessionsToDemoFolder() {
+                const payload = {
+                    sessions: model.history,
+                    fileName: "activityHistory-" + new Date().toISOString().split("T")[0] + ".json"
+                };
+
+                const response = await fetch("http://localhost:3000/api/activity/save-json", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                return { ok: response.ok && result.success, result };
+            }
+
+            function downloadJson(data, fileName) {
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = fileName;
+                link.click();
+                URL.revokeObjectURL(url);
+            }
+
+            function downloadCsv(sessions, sourceName) {
+                const csv = buildCsvRows(sessions);
+                const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = "activity-history-" + sourceName + "-" + new Date().toISOString().slice(0, 10) + ".csv";
+                link.click();
+                URL.revokeObjectURL(url);
+            }
+
+            function buildRawLogsCsv(session) {
+                const startTime = parseDate(session.startTime);
+                const endTime = parseDate(session.endTime) || new Date();
+                const dateValue = startTime ? startTime.toISOString().slice(0, 10) : endTime.toISOString().slice(0, 10);
+                const activityName = normalizeText(session.detail || session.category || "");
+                const durationMinutes = Math.max(1, Math.round((endTime.getTime() - (startTime ? startTime.getTime() : endTime.getTime())) / 60000));
+
+                return [
+                    "date,activity_name,duration_minutes",
+                    [dateValue, activityName, String(durationMinutes)].map(csvEscape).join(",")
+                ].join("\n");
+            }
+
+            function exportRawLogsCsv() {
+                const session = getRawLogSession(model);
+                if (!session) {
+                    return false;
+                }
+
+                downloadTextFile("raw_logs.csv", buildRawLogsCsv(session), "text/csv;charset=utf-8;");
+                return true;
+            }
+
+            async function loadDatabaseRows() {
+                dom.databaseStatus.textContent = "Loading database...";
+                dom.databaseBody.innerHTML = "";
+
+                try {
+                    const response = await fetch("http://localhost:3000/api/activities");
+                    const data = await response.json();
+
+                    if (!response.ok || !data.success || !Array.isArray(data.activities)) {
+                        throw new Error(data && data.error ? data.error : "Could not load database.");
+                    }
+
+                    if (data.activities.length === 0) {
+                        dom.databaseTable.hidden = true;
+                        dom.databaseStatus.textContent = "No database rows found.";
+                        return;
+                    }
+
+                    dom.databaseBody.innerHTML = data.activities.map((row) => {
+                        const totalSeconds = row.duration_seconds == null
+                            ? Math.round((Number(row.duration_minutes) || 0) * 60)
+                            : Number(row.duration_seconds);
+                        return "<tr>" +
+                            "<td>" + escapeHtml(row.id == null ? "-" : String(row.id)) + "</td>" +
+                            "<td>" + escapeHtml(row.date == null ? "-" : String(row.date)) + "</td>" +
+                            "<td>" + escapeHtml(row.activity_name == null ? "-" : String(row.activity_name)) + "</td>" +
+                            "<td>" + escapeHtml(formatDurationHms(totalSeconds)) + "</td>" +
+                            "</tr>";
+                    }).join("");
+
+                    dom.databaseTable.hidden = false;
+                    dom.databaseStatus.textContent = "Loaded " + data.activities.length + " row(s) from tracker.db.";
+                } catch (error) {
+                    dom.databaseTable.hidden = true;
+                    dom.databaseStatus.textContent = "Could not load database: " + error.message;
+                }
+            }
+
+            async function listLatestUploadsForCleanup() {
+                try {
+                    const response = await fetch("http://localhost:3000/api/cleanup/uploads");
+                    const data = await response.json();
+                    if (!response.ok || !data.success) {
+                        setCleanupOutput("Cleanup list failed", data);
+                        return;
+                    }
+                    setCleanupOutput("Latest uploads", data.uploads || []);
+                } catch (error) {
+                    setCleanupOutput("Cleanup list failed", { error: error.message });
+                }
+            }
+
+            async function previewCleanupDelete() {
+                const uploadId = Number(document.getElementById("cleanup-upload-id").value);
+                if (!Number.isInteger(uploadId) || uploadId <= 0) {
+                    setCleanupOutput("Validation failed", { error: "UploadId must be a positive integer." });
+                    return;
+                }
+
+                try {
+                    const response = await fetch("http://localhost:3000/api/cleanup/preview-delete-upload", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ uploadId })
+                    });
+                    const data = await response.json();
+                    if (!response.ok || !data.success) {
+                        setCleanupOutput("Cleanup preview failed", data);
+                        return;
+                    }
+                    setCleanupOutput("Cleanup preview", data.preview || data);
+                } catch (error) {
+                    setCleanupOutput("Cleanup preview failed", { error: error.message });
+                }
+            }
+
+            async function commitCleanupDelete() {
+                const uploadId = Number(document.getElementById("cleanup-upload-id").value);
+                const confirmText = String(document.getElementById("cleanup-confirm").value || "").trim();
+                if (!Number.isInteger(uploadId) || uploadId <= 0) {
+                    setCleanupOutput("Validation failed", { error: "UploadId must be a positive integer." });
+                    return;
+                }
+
+                try {
+                    const response = await fetch("http://localhost:3000/api/cleanup/commit-delete-upload", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ uploadId, confirmText })
+                    });
+                    const data = await response.json();
+                    if (!response.ok || !data.success) {
+                        setCleanupOutput("Cleanup commit failed", data);
+                        return;
+                    }
+                    setCleanupOutput("Cleanup commit succeeded", data);
+                    document.getElementById("cleanup-confirm").value = "";
+                    await readDatabaseSessions();
+                } catch (error) {
+                    setCleanupOutput("Cleanup commit failed", { error: error.message });
+                }
+            }
+
+            async function onStartCategory(category) {
+                try {
+                    const detail = category === "Custom"
+                        ? (normalizeText(dom.customName.value) || normalizeText(dom.savedCustomSelect.value))
+                        : category;
+                    const tags = category === "Custom" ? parseTags(dom.tagsInput.value) : [];
+                    const target = category === "Custom" ? normalizeTarget(dom.customTargetNote.value) : "";
+                    const mindset = category === "Custom" ? normalizeMindset(dom.customMindset.value) : "";
+                    model.startSession(category, detail, tags, target, mindset);
+                    persistHistory();
+                    setActiveCategoryButton(category);
+                    renderTimer();
+                    startTimerLoop();
+                    renderMainHistory();
+                    readLocalHistory();
+                    setStatus("Started " + category + " session.", false);
+                } catch (error) {
+                    setStatus(error.message, true);
+                }
+            }
+
+            async function onStop() {
+                if (!model.activeSession) {
+                    setStatus("No active session to stop.", true);
+                    return;
+                }
+                const endedSession = model.stopSession();
+                persistHistory();
+                stopTimerLoop();
+                setActiveCategoryButton("");
+                renderTimer();
+                renderMainHistory();
+                readLocalHistory();
+                setStatus("Session stopped.", false);
+
+                if (endedSession) {
+                    await saveSessionToServer(endedSession);
+                }
+            }
+
+            function bindEvents() {
+                document.getElementById("open-settings").addEventListener("click", openSettings);
+                document.getElementById("close-settings").addEventListener("click", closeSettings);
+                dom.settingsOverlay.addEventListener("click", closeSettings);
+
+                document.querySelectorAll(".category-btn").forEach((button) => {
+                    button.addEventListener("click", () => {
+                        const category = button.getAttribute("data-category");
+                        if (category === "Custom") {
+                            dom.customPanel.classList.toggle("open");
+                            dom.customPanel.setAttribute("aria-hidden", dom.customPanel.classList.contains("open") ? "false" : "true");
+                            return;
+                        }
+                        onStartCategory(category);
+                    });
+                });
+
+                document.getElementById("start-custom").addEventListener("click", () => onStartCategory("Custom"));
+
+                document.getElementById("save-custom-activity").addEventListener("click", () => {
+                    addSavedCustomActivity(dom.customName.value);
+                });
+
+                document.querySelectorAll(".quick-pick").forEach((chip) => {
+                    chip.addEventListener("click", () => {
+                        dom.customName.value = chip.getAttribute("data-pick") || "";
+                        onStartCategory("Custom");
+                    });
+                });
+
+                document.getElementById("stop-button").addEventListener("click", onStop);
+
+                document.getElementById("export-raw-button").addEventListener("click", async () => {
+                    const exported = exportRawLogsCsv();
+                    if (!exported) {
+                        setStatus("No session to export.", true);
+                        setOutput("Raw logs CSV export", { exported: false, reason: "no session available" });
+                        await checkPipelineStatus();
+                        return;
+                    }
+
+                    const sqliteImport = await importRawLogToSqlite(getRawLogSession(model));
+                    const wasImported = !!sqliteImport.ok;
+                    const summary = wasImported
+                        ? "Downloaded raw_logs.csv and imported to SQLite."
+                        : "Downloaded raw_logs.csv. SQLite import failed: " + sqliteImport.message;
+
+                    setStatus(summary, !wasImported);
+                    setOutput("Raw logs CSV export + SQLite import", {
+                        exported: true,
+                        fileName: "raw_logs.csv",
+                        headers: ["date", "activity_name", "duration_minutes"],
+                        sqliteImport
+                    });
+
+                    await loadDatabaseRows();
+                    await checkPipelineStatus();
+                });
+
+                document.getElementById("save-json").addEventListener("click", () => {
+                    if (model.activeSession && !model.activeSession.endTime) {
+                        model.stopSession();
+                        persistHistory();
+                    }
+                    downloadJson(model.history, "activityHistory.json");
+                    renderMainHistory();
+                    setActiveCategoryButton("");
+                    renderTimer();
+                    stopTimerLoop();
+                    setStatus("Downloaded JSON.", false);
+                });
+
+                document.getElementById("save-demo-folder").addEventListener("click", async () => {
+                    if (model.history.length === 0) {
+                        setStatus("No sessions to save.", true);
+                        return;
+                    }
+                    try {
+                        const response = await saveSessionsToDemoFolder();
+                        if (!response.ok) {
+                            setStatus("Could not save to C:\\Data.", true);
+                            return;
+                        }
+                        setStatus("Saved to C:\\Data.", false);
+                    } catch (error) {
+                        setStatus("Could not save to C:\\Data: " + error.message, true);
+                    }
+                });
+
+                document.getElementById("upload-current").addEventListener("click", async () => {
+                    if (model.history.length === 0) {
+                        setStatus("No sessions to upload.", true);
+                        return;
+                    }
+                    try {
+                        const response = await uploadSessions(model.history, "activityHistory");
+                        if (!response.ok) {
+                            setStatus("Upload failed.", true);
+                            return;
+                        }
+                        if (response.result.uploadId != null) {
+                            model.history.forEach((session) => {
+                                session.uploadId = response.result.uploadId;
+                            });
+                            persistHistory();
+                            renderMainHistory();
+                        }
+                        setStatus("Uploaded " + response.result.sessionCount + " sessions.", false);
+                        readLocalHistory();
+                    } catch (error) {
+                        setStatus("Could not reach server: " + error.message, true);
+                    }
+                });
+
+                document.getElementById("clear-button").addEventListener("click", () => {
+                    if (!confirm("Clear all tracked sessions? This cannot be undone.")) return;
+                    model.clearAll();
+                    persistHistory();
+                    stopTimerLoop();
+                    setActiveCategoryButton("");
+                    renderTimer();
+                    renderMainHistory();
+                    readLocalHistory();
+                    setStatus("All sessions cleared.", false);
+                });
+
+                document.getElementById("server-status").addEventListener("click", async () => {
+                    dom.serverFeedback.className = "feedback info";
+                    dom.serverFeedback.textContent = "Checking status...";
+                    const result = await callServerAction("status");
+                    dom.serverFeedback.className = "feedback " + (result.ok ? "success" : "error");
+                    dom.serverFeedback.textContent = result.message;
+                });
+
+                document.getElementById("import-file").addEventListener("click", () => {
+                    dom.jsonFile.click();
+                });
+
+                dom.jsonFile.addEventListener("change", async (event) => {
+                    const files = Array.from((event.target.files || []));
+                    if (files.length === 0) return;
+
+                    const readFileText = (file) => {
+                        return new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = (loadEvent) => resolve(String(loadEvent.target.result || ""));
+                            reader.onerror = () => reject(new Error("Could not read " + file.name));
+                            reader.readAsText(file);
+                        });
+                    };
+
+                    const combinedSessions = [];
+                    const failedFiles = [];
+
+                    for (let index = 0; index < files.length; index += 1) {
+                        const file = files[index];
+                        try {
+                            const text = await readFileText(file);
+                            const lower = file.name.toLowerCase();
+                            const sessions = lower.endsWith(".csv") ? parseCsvSessions(text) : JSON.parse(text);
+                            if (!Array.isArray(sessions)) {
+                                throw new Error("Imported file must contain an array.");
+                            }
+                            combinedSessions.push.apply(combinedSessions, sessions.map(normalizeSession));
+                        } catch (error) {
+                            failedFiles.push(file.name);
+                        }
+                    }
+
+                    if (combinedSessions.length === 0) {
+                        setStatus("Import failed. Use JSON array or CSV with Start and End columns.", true);
+                        event.target.value = "";
+                        return;
+                    }
+
+                    sourceStore["selected-json"] = combinedSessions;
+                    selectedJsonLabel = files.length === 1
+                        ? files[0].name
+                        : files.length + " files (batch import)";
+                    dom.sourceFilter.value = "selected-json";
+                    renderBySource("selected-json");
+
+                    const successCount = files.length - failedFiles.length;
+                    if (failedFiles.length > 0) {
+                        setStatus(
+                            "Imported " + combinedSessions.length + " sessions from " + successCount +
+                            " file(s). Failed: " + failedFiles.join(", "),
+                            true
+                        );
+                    } else {
+                        setStatus(
+                            "Imported " + combinedSessions.length + " sessions from " + files.length + " file(s).",
+                            false
+                        );
+                    }
+
+                    event.target.value = "";
+                });
+
+                document.getElementById("load-local").addEventListener("click", readLocalHistory);
+                document.getElementById("load-cdata-csv").addEventListener("click", readMasterCsvSessions);
+                document.getElementById("load-database").addEventListener("click", readDatabaseSessions);
+                document.getElementById("load-db-button").addEventListener("click", loadDatabaseRows);
+                document.getElementById("show-advanced-query").addEventListener("click", showAdvancedQuery);
+                document.getElementById("toggle-manual-entry").addEventListener("click", toggleManualEntryPanel);
+                document.getElementById("manual-save").addEventListener("click", addManualSession);
+                document.getElementById("manual-retry").addEventListener("click", retryPendingManualQueue);
+
+                document.getElementById("export-csv").addEventListener("click", () => {
+                    if (lastLoadedSessions.length === 0) {
+                        setOutput("CSV export", { exported: false, reason: "no sessions loaded" });
+                        return;
+                    }
+                    downloadCsv(lastLoadedSessions, sourceType);
+                    setOutput("CSV export", { exported: true, rows: lastLoadedSessions.length });
+                });
+
+                document.getElementById("upload-server").addEventListener("click", async () => {
+                    if (lastLoadedSessions.length === 0) {
+                        setOutput("Upload skipped", { reason: "no loaded sessions" });
+                        return;
+                    }
+                    try {
+                        const response = await uploadSessions(lastLoadedSessions, "activityHistory-loaded");
+                        if (!response.ok) {
+                            setOutput("Upload failed", response.result || {});
+                            return;
+                        }
+                        setOutput("Upload succeeded", response.result);
+                    } catch (error) {
+                        setOutput("Upload failed", { error: error.message });
+                    }
+                });
+
+                document.getElementById("refresh-source").addEventListener("click", () => {
+                    renderBySource(sourceType);
+                });
+
+                document.getElementById("check-pipeline").addEventListener("click", checkPipelineStatus);
+
+                dom.sourceFilter.addEventListener("change", (event) => {
+                    renderBySource(event.target.value);
+                });
+
+                document.getElementById("cleanup-list").addEventListener("click", listLatestUploadsForCleanup);
+                document.getElementById("cleanup-preview").addEventListener("click", previewCleanupDelete);
+                document.getElementById("cleanup-commit").addEventListener("click", commitCleanupDelete);
+            }
+
+            function initialize() {
+                renderCustomActivitiesSelect();
+                renderMainHistory();
+                renderTimer();
+                bindEvents();
+                readLocalHistory();
+                checkPipelineStatus();
+                loadDatabaseRows();
+
+                if (dbMirrorIntervalId) {
+                    clearInterval(dbMirrorIntervalId);
+                }
+                dbMirrorIntervalId = setInterval(() => {
+                    loadDatabaseRows();
+                }, 15000);
+            }
+
+            return {
+                initialize
+            };
+        }
+
+        (function bootstrap() {
+            let seedHistory;
+            try {
+                seedHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+            } catch (error) {
+                seedHistory = [];
+            }
+
+            const model = new TrackerModel(Array.isArray(seedHistory) ? seedHistory.map(normalizeSession) : []);
+            const ui = createUiController(model);
+            ui.initialize();
+
+            // Surface model for future unit tests in browser-based runners.
+            window.ActivityTrackerModel = TrackerModel;
+        })();
+    </script>
+</body>
+</html>
