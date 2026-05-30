@@ -1,0 +1,26 @@
+AT2 Activity Tracker - Getting Started
+
+1) Installs Required
+- Install Node.js (LTS, version 18 or newer).
+- Open a terminal in this project folder.
+- Run: npm install
+
+2) Run Node Server So Tracker Works
+- In the same project folder, run: npm start
+  (This runs node server.js through the package start script.)
+- Keep this terminal window open while using the tracker.
+
+3) Open Tracker + Status Note
+- Open your browser to: http://localhost:3000
+- In the app, open Settings and click the Status button.
+- Expected result: a healthy server message.
+- If Status fails, check terminal output first.
+
+Quick Troubleshooting
+- Error: Cannot find module 'express'
+  Run: npm install
+- Error: Port 3000 is already in use
+  Use another port in PowerShell:
+  $env:PORT=3001
+  npm start
+  Then open: http://localhost:3001

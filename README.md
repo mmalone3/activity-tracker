@@ -42,34 +42,63 @@ Three utilities support data ingestion:
 ## Quick Start
 
 ### Prerequisites
-- Python 3.9+
-- pip
+- Node.js 18+
+- npm
 
-### Setup
+### Node API + UI (recommended)
 
 1. Clone and enter the directory:
-   ```bash
-   git clone https://github.com/yourusername/activity-tracker.git
-   cd activity-tracker
-   ```
+  ```bash
+  git clone https://github.com/yourusername/activity-tracker.git
+  cd activity-tracker
+  ```
 
-2. Create a virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+2. Install Node dependencies:
+  ```bash
+  npm install
+  ```
 
-3. Install dependencies:
-   ```bash
-   pip install fastapi uvicorn
-   ```
+3. Start the server:
+  ```bash
+  npm start
+  ```
 
-4. Start the API server:
-   ```bash
-   uvicorn main:app --host 127.0.0.1 --port 8000 --reload
-   ```
+4. Open the app at **http://localhost:3000**.
 
-5. Open a browser to **http://localhost:8000** and navigate to the UI.
+### Optional Python API mode
+
+Use this mode only if you want to run the FastAPI endpoints in `main.py`.
+
+1. Create and activate a virtual environment:
+  ```bash
+  python -m venv venv
+  # Windows PowerShell
+  .\venv\Scripts\Activate.ps1
+  ```
+
+2. Install Python dependencies:
+  ```bash
+  pip install -r requirements.txt
+  ```
+
+3. Start FastAPI:
+  ```bash
+  uvicorn main:app --host 127.0.0.1 --port 8000 --reload
+  ```
+
+### Troubleshooting
+
+- `npm start` fails with `Cannot find module ...`:
+  run `npm install` first.
+- `npm start` fails with `Cannot find module '.../server.js'`:
+  make sure `server.js` exists in the repo root and is committed.
+- `Port 3000 is already in use`:
+  stop the existing process, or run with a different port:
+  ```bash
+  # PowerShell
+  $env:PORT=3001
+  npm start
+  ```
 
 ### API Endpoints
 
