@@ -1,6 +1,10 @@
 # Activity Tracker
 
 A full-stack activity tracking application with a responsive web UI, REST API, and SQLite persistence layer for logging and analyzing daily activities.
+<img width="3534" height="1581" alt="project1" src="https://github.com/user-attachments/assets/35dd7eba-860e-4d16-bf4a-ea7ba4e4bdb7" />
+<img width="3150" height="849" alt="Project1-1" src="https://github.com/user-attachments/assets/394fdd3b-f3ad-4236-9259-bd053ccc55aa" />
+<img width="2247" height="1719" alt="project2" src="https://github.com/user-attachments/assets/e2a48c6c-580f-485a-a871-55fc32f6e749" />
+
 
 ## Problem Statement
 
